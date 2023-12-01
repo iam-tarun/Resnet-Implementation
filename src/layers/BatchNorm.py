@@ -65,8 +65,3 @@ class BatchNorm:
     self.bias -= lr * grad_bias
 
     return grad_x
-
-bnorm = BatchNorm(3)
-X = torch.randn(4, 3, 8, 8)
-y = bnorm.forward(X)
-print(y)
