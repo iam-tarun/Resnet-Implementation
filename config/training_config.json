@@ -1,0 +1,20 @@
+{
+  "training": {
+    "learning_rate": 0.001,
+    "num_epochs": 10,
+    "batch_size": 64,
+    "optimizer": "adam"
+  },
+  "data": {
+      "data_augmentation": true,
+      "normalize_data": true
+  },
+  "model_save": {
+      "save_path": "models/",
+      "file_format": "h5"
+  },
+  "logging": {
+      "log_level": "info",
+      "log_file": "logs/training.log"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "model_architecture": {
+    "num_layers": 18,
+    "activation_functions": ["relu"]
+  },
+  "data_processing": {
+    "input_dimensions": 1,
+    "output_dimensions": 1
+  }
+}
