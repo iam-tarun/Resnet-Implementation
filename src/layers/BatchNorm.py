@@ -40,12 +40,12 @@ class BatchNorm:
       return self.weight * x_normalized + self.bias
 
   def backward(self, grad: torch.Tensor, lr=0.01):
-    # Calculate gradients for gamma and beta
+    # Calculate gradients for weight and bias
     grad_weight = torch.sum(grad * self.x_centered / self.var_denom, axis=(0, 2, 3), keepdims=True)
     grad_bias = torch.sum(grad, axis=(0, 2, 3), keepdims=True)
 
     # Calculate gradient for x_normalized
-    grad_x_normalized = grad * self.gamma
+    grad_x_normalized = grad * self.weight
 
     # Calculate gradients for x_centered and var_denom
     grad_x_centered = grad_x_normalized / self.var_denom

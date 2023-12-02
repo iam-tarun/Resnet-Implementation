@@ -12,9 +12,13 @@ class ConvLayer:
     self.filters = torch.randn(self.n_kernels, self.in_channels, self.kernel_size[0], self.kernel_size[1], device=self.device, requires_grad=True)
     self.bias = torch.zeros(1, self.n_kernels, requires_grad=True, device=self.device)
     self.doBias = bias
+    self.input = None
+    self.w_d = None
+    self.b_d = None
 
   def forward(self, X: torch.Tensor) -> torch.Tensor:
     assert len(X.shape) == 4
+    self.input = X
     y = torch.zeros(X.shape[0], self.out_channels, int((X.shape[2] - self.kernel_size[0] + (2*self.padding))/self.strides) + 1, int((X.shape[3] - self.kernel_size[1]  + (2*self.padding))/self.strides) + 1, device=self.device)
     if self.padding > 0:
       # x = torch.nn.functional.pad(input=x, pad=(0, padding, 0, padding, 0, 0, 0, 0), mode='constant', value=0)
@@ -37,6 +41,23 @@ class ConvLayer:
 
     return y
 
+  def backward(self, grad: torch.Tensor):
+    y = torch.zeros(self.input.shape[0], self.out_channels, int((self.input.shape[2] - self.kernel_size[0] + (2*self.padding))/self.strides) + 1, int((self.input.shape[3] - self.kernel_size[1]  + (2*self.padding))/self.strides) + 1, device=self.device)
+    self.b_d = torch.sum(grad, dim=(0, 1, 2)) / self.in_channels
+    self.w_d = torch.zeros_like(self.filters)
+
+    for r in range(grad.shape[2]):
+      for c in range(grad.shape[3]):
+        row_start = r * self.strides
+        row_end = row_start + self.kernel_size[0]
+        col_start = c * self.strides
+        col_end = col_start + self.kernel_size[1]
+        y[:, :, row_start: row_end, col_start:col_end] += torch.sum(self.filters * grad[:, :, r:r+1, c:c+1], dim=(1, 2, 3))
+        self.w_d += torch.sum(
+          self.input[:, :, row_start: row_end, col_start: col_end] * grad[:, :, r:r+1, c:c+1], dim=0
+        )
+    self.w_d /= self.in_channels
+    return y
 
 
  

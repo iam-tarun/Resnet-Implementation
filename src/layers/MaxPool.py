@@ -38,8 +38,8 @@ class MaxPool:
         row_start = r * self.strides
         row_end = r * self.strides + self.kernel_size[0]
 
-        input_slice = self.input[:, :, row_start:row_end, col_start: col_end]
-        max_positions = torch.argmax(input_slice.view(self.input.shape[0], self.input.shape[1], -1), dim=2)
+        input_slice = self.input[:, :, row_start: row_end, col_start: col_end]
+        max_positions = torch.argmax(input_slice.reshape(self.input.shape[0], self.input.shape[1], -1), dim=2)
         
         max_i = max_positions // self.kernel_size[0]
         max_j = max_positions % self.kernel_size[0]

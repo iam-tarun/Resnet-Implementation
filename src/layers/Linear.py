@@ -13,19 +13,19 @@ class Linear:
   def forward(self, X: torch.Tensor) -> torch.Tensor:
     assert len(X.shape) == 2
     self.input = X
-    return X.dot(self.weight.T) + self.bias.expand(X.shape[0], self.out_features)
+    return torch.matmul(X, self.weight.T) + self.bias.expand(X.shape[0], self.out_features)
   
   def backward(self, grad: torch.Tensor, lr: float = 0.01):
     assert self.input != None
     assert self.out_features == grad.shape[1]
     assert self.input.shape[0] == grad.shape[0]
     
-    grad_weight = torch.dot(grad.T, self.input)
+    grad_weight = torch.matmul(grad.T, self.input)
     grad_bias = torch.sum(grad, dim=0)
 
 
     self.weight -= lr * grad_weight
     self.bias -= lr * grad_bias
 
-    return torch.dot(grad, self.weight)
+    return torch.matmul(grad, self.weight)
   

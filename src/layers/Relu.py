@@ -11,4 +11,4 @@ class Relu:
     return X.detach().apply_(lambda x: self.apply(x))
 
   def backward(self, grad: torch.Tensor) -> torch.Tensor:
-    return grad.apply_(lambda x: self.apply(x))
+    return grad.detach().apply_(lambda x: self.apply(x))
