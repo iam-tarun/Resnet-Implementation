@@ -13,7 +13,7 @@ class Linear:
   def forward(self, X: torch.Tensor) -> torch.Tensor:
     assert len(X.shape) == 2
     self.input = X
-    return X.dot(self.weight) + self.bias.expand(X.shape[0], self.out_features)
+    return X.dot(self.weight.T) + self.bias.expand(X.shape[0], self.out_features)
   
   def backward(self, grad: torch.Tensor, lr: float = 0.01):
     assert self.input != None

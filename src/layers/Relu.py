@@ -8,7 +8,7 @@ class Relu:
     return 0 if x < 0 else x
 
   def forward(self, X: torch.Tensor) -> torch.Tensor:
-    return X.apply_(lambda x: self.apply(x))
+    return X.detach().apply_(lambda x: self.apply(x))
 
   def backward(self, grad: torch.Tensor) -> torch.Tensor:
     return grad.apply_(lambda x: self.apply(x))

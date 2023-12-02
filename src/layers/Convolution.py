@@ -7,9 +7,9 @@ class ConvLayer:
     self.kernel_size = kernel_size
     self.strides = strides
     self.padding = padding
-    self.n_kernels: int = int(out_channels / in_channels)
+    self.n_kernels = out_channels
     self.device = device
-    self.filters = torch.randn(self.n_kernels, self.kernel_size[0], self.kernel_size[1], device=self.device, requires_grad=True)
+    self.filters = torch.randn(self.n_kernels, self.in_channels, self.kernel_size[0], self.kernel_size[1], device=self.device, requires_grad=True)
     self.bias = torch.zeros(1, self.n_kernels, requires_grad=True, device=self.device)
     self.doBias = bias
 
@@ -31,7 +31,7 @@ class ConvLayer:
         row_start = r
         row_end = r + self.kernel_size[0]
         # do the dot product of each 2d matrix in the input with each kernel and add all the elements in the resultant 2d matrix (convolution operation) for the entire batch at the current position with all kernels
-        y[:, :, row_start, col_start] = (torch.matmul(X[:, :, row_start: row_end, col_start: col_end], self.filters.expand(X.shape[0], -1, self.kernel_size[0], self.kernel_size[1])).sum(dim=(2,3)).view(-1, self.out_channels)).to(device=self.device)
+        y[:, :, row_start, col_start] = (torch.matmul(X[:, :, row_start: row_end, col_start: col_end], self.filters)).sum(dim=(1,2,3)).view(X.shape[0], -1).to(device=self.device)
         if self.doBias:
           y[:, :, row_start, col_start] = y[:, :, row_start, col_start].add(self.bias)
 

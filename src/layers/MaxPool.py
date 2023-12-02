@@ -1,12 +1,12 @@
 import torch
 
 class MaxPool:
-  def __init__(self, kernel_size= [2, 2], strides= 1, padding= 0, device="cpu"):
+  def __init__(self, kernel_size= [2, 2], strides= 2, padding= 0, device="cpu"):
     self.kernel_size = kernel_size
     self.strides = strides
     self.padding = padding
     self.device = device
-    self.input
+    self.input = None
   
   def forward(self, X: torch.Tensor) -> torch.Tensor:
     self.input = X
