@@ -60,9 +60,9 @@ class ConvLayer:
     for ch in range(self.filter_grads.shape[1]):
       for c in range(self.filter_grads.shape[3]):
         for r in range(self.filter_grads.shape[2]):
-          row_start = r * self.strides
+          row_start = r
           row_end = row_start + loss_grad.shape[2]
-          col_start = c * self.strides
+          col_start = c
           col_end = col_start + loss_grad.shape[3]
           # [6, 3] = ( [2, 3, 6, 6] * [2, 6, 6, 6] ) sum over 
           self.filter_grads[:, ch, row_start, col_start] = torch.sum(self.input[:, ch, row_start: row_end, col_start: col_end] * loss_grad, dim=(2, 3))
@@ -90,17 +90,21 @@ class ConvLayer:
 
     self.filters -= lr*self.filter_grads
     self.bias -= lr * self.bias_grads
+    if self.padding:
+      input_grads = input_grads[:, :, self.padding: self.input.shape[2] - self.padding, self.padding: self.input.shape[3] - self.padding]
     return input_grads
 
 
 # # pytorch lib method
-# c2 = ConvLayer(2, 4)
+# c2 = ConvLayer(2, 4, padding=1)
 # input = torch.tensor([[[[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]], [[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]]]], dtype=torch.float)
 # input2 = input.clone()
 # input2.requires_grad_(True)
 # o2 = c2.forward(input)
 # # print(o2.shape)
-# grads = torch.tensor([[[[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]]]], dtype=torch.float)
+# # grads = torch.tensor([[[[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]]]], dtype=torch.float)
+# # grads = torch.tensor([[[[1]], [[0]], [[1]], [[0]]]], dtype=torch.float)
+# grads = torch.tensor([[[[1, 0, 1, 1], [1, 1, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1]], [[1, 0, 1, 1], [1, 1, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1]], [[1, 0, 1, 1], [1, 1, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1]], [[1, 0, 1, 1], [1, 1, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1]]]], dtype=torch.float)
 # # print(grads.shape)
 # g3 = c2.backward(grads)
 # # print(o2)
@@ -109,7 +113,7 @@ class ConvLayer:
 # custom_kernels = torch.ones(4, 2, 3, 3, requires_grad=True)
 # custom_gradients = grads
 # bias_val = torch.zeros(4, requires_grad=True)
-# o1 = F.conv2d(input2, custom_kernels, bias=bias_val)
+# o1 = F.conv2d(input2, custom_kernels, bias=bias_val, padding=1)
 # # print(o1)
 # o1.backward(grads)
 # # print(custom_kernels.grad)
