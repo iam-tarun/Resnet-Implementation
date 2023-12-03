@@ -3,7 +3,7 @@ from layers.batch_norm_layer import  BatchNorm
 from layers.relu_layer import Relu
 import torch
 
-class ResLayer:
+class ResBlock:
   def __init__(self, in_channels, out_channels, stride=1, skip_layer=None):
     self.conv1 = ConvLayer(in_channels, out_channels)
     self.bn1 = BatchNorm(out_channels)
@@ -23,7 +23,7 @@ class ResLayer:
     x = self.bn2.forward(x)
 
     if self.skip_layer is not None:
-      self.input = self.skip_layer(self.input)
+      self.input = self.skip_layer.forward(self.input)
     
     # x += self.input
     x = self.relu2.forward(x)
@@ -41,11 +41,69 @@ class ResLayer:
   
 
 # testing reslayer
+# input = torch.randn(1, 64, 56, 56, dtype=torch.float)
+# rl = ResBlock(64, 64, 2)
+# o = rl.forward(input)
+# print(o.shape)
+# grads = torch.randn(1, 64, 28, 28, dtype=torch.float)
+# g = rl.backward(grads)
+# print(g.shape)
 
-input = torch.randn(1, 64, 56, 56, dtype=torch.float)
-rl = ResLayer(64, 64, 2)
-o = rl.forward(input)
-print(o.shape)
-grads = torch.randn(1, 64, 28, 28, dtype=torch.float)
-g = rl.backward(grads)
-print(g.shape)
+class ResLayer:
+  def __init__(self, in_channels: int, out_channels: int):
+    self.in_channels = in_channels
+    self.out_channels = out_channels
+    self.identity_conv = ConvLayer(in_channels, out_channels, kernel_size=[1, 1], strides=2)
+    self.res_block1 = ResBlock(in_channels, out_channels, 2, self.identity_conv)
+    self.res_block2 = ResBlock(out_channels, out_channels)
+
+  def forward(self, x: torch.Tensor) -> torch.Tensor:
+    x = self.res_block1.forward(x)
+    x = self.res_block2.forward(x)
+    return x
+
+  def backward(self, grads: torch.Tensor) -> torch.Tensor:
+    grad = self.res_block2.backward(grads)
+    grad = self.res_block1.backward(grad)
+    return grad
+  
+# testing reslayer
+# from PIL import Image
+# from torchvision import transforms
+# import matplotlib.pyplot as plt
+# import numpy as np
+
+# transform = transforms.Compose([
+#   transforms.ToTensor(),
+# ])
+# img = Image.open("src/lena.gif")
+# img = np.array(img)
+# img.resize(3, 56, 56)
+# x = transform(img)
+# x = x.unsqueeze(0)
+# x = x.reshape(1, 3, 56, 56)
+# print(x.shape)
+# rl1 = ResLayer(3, 64)
+# rl2 = ResLayer(64, 128)
+# rl3 = ResLayer(128, 256)
+# rl4 = ResLayer(256, 512)
+# # x = torch.randn(1, 3, 56, 56)
+# x = rl1.forward(x)
+# print(x.shape)
+# x = rl2.forward(x)
+# print(x.shape)
+# x = rl3.forward(x)
+# print(x.shape)
+# x = rl4.forward(x)
+# print(x.shape)
+# grad = torch.randn_like(x)
+# grads = rl4.backward(grad)
+# print(grads.shape)
+# grads = rl3.backward(grads)
+# print(grads.shape)
+# grads = rl2.backward(grads)
+# print(grads.shape)
+# grads = rl1.backward(grads)
+# print(grads.shape)
+# plt.imshow(grads[0].permute(1, 2, 0).cpu().numpy())
+# plt.show()
