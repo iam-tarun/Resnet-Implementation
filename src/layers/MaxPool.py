@@ -47,3 +47,19 @@ class MaxPool:
         grad_input_tensor[:, :, row_start: row_end, col_start: col_end][:, :, max_i, max_j] += grad[:, :, r, c]
     
     return grad_input_tensor
+  
+# input = torch.tensor([[[[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]], [[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]]]], dtype=torch.float)
+# input2 = input.clone()
+# input2.requires_grad_(True)
+# mp = MaxPool()
+# x = mp.forward(input)
+# # print(x)
+
+# x2 = torch.nn.functional.max_pool2d(input2, kernel_size=2, stride=2)
+# # print(x2)
+
+# grads = torch.tensor([[[[1, 0], [1, 0]], [[1, 0], [1, 0]]]], dtype=torch.float)
+# x2.backward(grads)
+# y = mp.backward(grads)
+# print(input2.grad)
+# print(y)
