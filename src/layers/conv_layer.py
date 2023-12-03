@@ -9,7 +9,10 @@ class ConvLayer:
     self.padding = padding
     self.n_kernels = out_channels
     self.device = device
-    self.filters = torch.ones(self.n_kernels, self.in_channels, self.kernel_size[0], self.kernel_size[1], device=self.device)
+    if self.kernel_size == [1, 1] :
+      self.filters = torch.ones(1,1, dtype=torch.float, device=self.device)
+    else:
+      self.filters = torch.randn(self.n_kernels, self.in_channels, self.kernel_size[0], self.kernel_size[1], device=self.device)
     self.bias = torch.zeros(1, self.n_kernels, device=self.device)
     self.doBias = bias
     self.input = None
