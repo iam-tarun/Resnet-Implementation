@@ -19,7 +19,6 @@ class Linear:
     assert self.input != None
     assert self.out_features == grad.shape[1]
     assert self.input.shape[0] == grad.shape[0]
-    
     grad_weight = torch.matmul(grad.T, self.input)
     grad_bias = torch.sum(grad, dim=0)
 

@@ -18,22 +18,22 @@ class AvgPool:
     for r in range(grads.shape[2]):
       for c in range(grads.shape[3]):
         d_avg = grads[:, :, r, c]/(self.kernel_size**2)
-        input_grads[:, :, r*self.kernel_size: r*self.kernel_size+self.kernel_size, c*self.kernel_size:c*self.kernel_size+self.kernel_size] += torch.ones(grads.shape[0], grads.shape[1], self.kernel_size, self.kernel_size) * d_avg
+        input_grads[:, :, r*self.kernel_size: r*self.kernel_size+self.kernel_size, c*self.kernel_size:c*self.kernel_size+self.kernel_size] += torch.ones(grads.shape[0], grads.shape[1], self.kernel_size, self.kernel_size) * d_avg.view(grads.shape[0], grads.shape[1], 1, 1)
     
     return input_grads
   
-input = torch.tensor([[[[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]], [[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]]]], dtype=torch.float)
-input2 = input.clone()
-input2.requires_grad_(True)
-avgp = AvgPool()
-x = avgp.forward(input)
-print(x)
+# input = torch.tensor([[[[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]], [[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]]]], dtype=torch.float)
+# input2 = input.clone()
+# input2.requires_grad_(True)
+# avgp = AvgPool()
+# x = avgp.forward(input)
+# print(x)
 
-x2 = torch.nn.functional.avg_pool2d(input2, kernel_size=2, stride=2)
-print(x2)
+# x2 = torch.nn.functional.avg_pool2d(input2, kernel_size=2, stride=2)
+# print(x2)
 
-grads = torch.tensor([[[[1, 0], [1, 0]], [[1, 0], [1, 0]]]], dtype=torch.float)
-x2.backward(grads)
-y = avgp.backward(grads)
-print(input2.grad)
-print(y)
+# grads = torch.tensor([[[[1, 0], [1, 0]], [[1, 0], [1, 0]]]], dtype=torch.float)
+# x2.backward(grads)
+# y = avgp.backward(grads)
+# print(input2.grad)
+# print(y)

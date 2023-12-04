@@ -9,14 +9,14 @@ class MaxPool:
     self.input = None
   
   def forward(self, X: torch.Tensor) -> torch.Tensor:
-    self.input = X
+    
     y = torch.zeros(X.shape[0], X.shape[1], int((X.shape[2] - self.kernel_size[0] + (2 * self.padding))/self.strides) + 1, int((X.shape[3] - self.kernel_size[1] + (2 * self.padding))/self.strides) + 1, device=self.device)
     if self.padding > 0:
       new_size = (X.shape[0], X.shape[1], X.shape[2] + 2*self.padding, X.shape[3] + 2*self.padding)
       x_padded = torch.zeros(new_size).to(device=self.device)
       x_padded[:, :, self.padding: x_padded.shape[2]-self.padding, self.padding: x_padded.shape[3]-self.padding] = X
       X = x_padded
-
+    self.input = X
     for c in range(0, y.shape[3]):
       col_start = c * self.strides
       col_end = c * self.strides + self.kernel_size[1]
