@@ -38,7 +38,7 @@ class ConvLayer:
         row_start = r * self.strides
         row_end = row_start + self.kernel_size[0]
         # do the dot product of each 2d matrix in the input with each kernel and add all the elements in the resultant 2d matrix (convolution operation) for the entire batch at the current position with all kernels
-        y[:, :, r, c] = (X[:, :, row_start: row_end, col_start: col_end] * self.filters).sum(dim=(1,2,3)).view(X.shape[0], -1).to(device=self.device)
+        y[:, :, r, c] = (X[:, :, row_start: row_end, col_start: col_end] * self.filters.unsqueeze(0).expand(X.shape[0], self.n_kernels, )).sum(dim=(1,2,3)).view(X.shape[0], -1).to(device=self.device)
         if self.doBias:
           y[:, :, r, c] = y[:, :, r, c].add(self.bias)
 
