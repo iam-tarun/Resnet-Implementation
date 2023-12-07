@@ -30,17 +30,18 @@ class ConvLayer:
       X = x_padded
     self.input = X
     # go through each column
-    for c in range(0, y.shape[3]):
-      col_start = c * self.strides
-      col_end = col_start + self.kernel_size[1]
-      # go through each row
-      for r in range(0, y.shape[2]):
-        row_start = r * self.strides
-        row_end = row_start + self.kernel_size[0]
-        # do the dot product of each 2d matrix in the input with each kernel and add all the elements in the resultant 2d matrix (convolution operation) for the entire batch at the current position with all kernels
-        y[:, :, r, c] = (X[:, :, row_start: row_end, col_start: col_end] * self.filters.unsqueeze(0).expand(X.shape[0], self.n_kernels, )).sum(dim=(1,2,3)).view(X.shape[0], -1).to(device=self.device)
-        if self.doBias:
-          y[:, :, r, c] = y[:, :, r, c].add(self.bias)
+    for im in range(X.shape[0]):
+      for c in range(0, y.shape[3]):
+        col_start = c * self.strides
+        col_end = col_start + self.kernel_size[1]
+        # go through each row
+        for r in range(0, y.shape[2]):
+          row_start = r * self.strides
+          row_end = row_start + self.kernel_size[0]
+          # do the dot product of each 2d matrix in the input with each kernel and add all the elements in the resultant 2d matrix (convolution operation) for the entire batch at the current position with all kernels
+          y[im, :, r, c] = (X[im, :, row_start: row_end, col_start: col_end] * self.filters).sum(dim= (1,2,3) if self.kernel_size[0] != 1 else (1,2)).to(device=self.device)
+          if self.doBias:
+            y[im, :, r, c] = y[im, :, r, c].add(self.bias)
 
     return y
 
@@ -78,7 +79,7 @@ class ConvLayer:
           col_start = c
           col_end = col_start + loss_grad.shape[3]
           # [6, 3] = ( [2, 3, 6, 6] * [2, 6, 6, 6] ) sum over 
-          self.filter_grads[:, ch, row_start, col_start] = torch.sum(self.input[:, ch, row_start: row_end, col_start: col_end] * loss_grad, dim=(2, 3))
+          self.filter_grads[:, ch, row_start, col_start] = torch.sum(self.input[:, ch, row_start: row_end, col_start: col_end].unsqueeze(0).repeat(1, self.input.shape[0], 1, 1) * loss_grad, dim=(0, 2, 3))
     
     # calculating the gradients for bias
     self.bias_grads = torch.zeros_like(self.bias)
@@ -104,7 +105,7 @@ class ConvLayer:
           input_grads[:, ch, r, c] = torch.sum(rotated_filters[:, ch, :, :] * loss_grad[:, :, r:r+self.kernel_size[0], c:c+self.kernel_size[1]], dim=(1,2,3))
 
     self.filters -= lr*self.filter_grads
-    self.bias -= lr * self.bias_grads
+    self.bias -= lr * self.bias_grads.sum(dim=(0))
     if self.padding:
       input_grads = input_grads[:, :, self.padding: self.input.shape[2] - self.padding, self.padding: self.input.shape[3] - self.padding]
     return input_grads
@@ -112,12 +113,14 @@ class ConvLayer:
 
 # # pytorch lib method
 # c2 = ConvLayer(2, 4)
-# input = torch.tensor([[[[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]], [[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]]]], dtype=torch.float)
+# input = torch.tensor([[[[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]], [[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]]],
+#                       [[[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]], [[1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1], [1, 0, 0, 1]]]
+#                       ], dtype=torch.float)
 # input2 = input.clone()
 # input2.requires_grad_(True)
 # o2 = c2.forward(input)
 # print(o2.shape)
-# grads = torch.tensor([[[[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]]]], dtype=torch.float)
+# grads = torch.tensor([[[[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]]], [[[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]], [[1, 0], [1, 0]]]], dtype=torch.float)
 # # grads = torch.tensor([[[[1]], [[0]], [[1]], [[0]]]], dtype=torch.float)
 # # grads = torch.tensor([[[[1, 0, 1, 1], [1, 1, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1]], [[1, 0, 1, 1], [1, 1, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1]], [[1, 0, 1, 1], [1, 1, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1]], [[1, 0, 1, 1], [1, 1, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1]]]], dtype=torch.float)
 # # print(grads.shape)
