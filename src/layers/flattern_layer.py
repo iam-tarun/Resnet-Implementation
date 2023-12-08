@@ -3,8 +3,9 @@ import torch
 #   return X.reshape(X.shape[0], -1)
 
 class Flatten:
-  def __init__(self, img_shape: [int, int, int]):
+  def __init__(self, img_shape: [int, int, int], device="cpu"):
     self.img_shape = img_shape
+    self.device = device
   
   def forward(self, X: torch.Tensor):
     return X.reshape(X.shape[0], -1)

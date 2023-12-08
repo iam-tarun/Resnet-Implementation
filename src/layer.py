@@ -4,13 +4,14 @@ from layers.relu_layer import Relu
 import torch
 
 class ResBlock:
-  def __init__(self, in_channels, out_channels, stride=1, skip_layer=None):
-    self.conv1 = ConvLayer(in_channels, out_channels)
-    self.bn1 = BatchNorm(out_channels)
-    self.conv2 = ConvLayer(out_channels, out_channels, strides=stride, padding=2)
-    self.bn2 = BatchNorm(out_channels)
-    self.relu1 = Relu(out_channels)
-    self.relu2 = Relu(out_channels)
+  def __init__(self, in_channels, out_channels, stride=1, skip_layer=None, device="cpu"):
+    self.device = device
+    self.conv1 = ConvLayer(in_channels, out_channels, device=self.device)
+    self.bn1 = BatchNorm(out_channels, device=self.device)
+    self.conv2 = ConvLayer(out_channels, out_channels, strides=stride, padding=2, device=self.device)
+    self.bn2 = BatchNorm(out_channels, device=self.device)
+    self.relu1 = Relu(out_channels, device=self.device)
+    self.relu2 = Relu(out_channels, device=self.device)
     self.skip_layer = skip_layer
     self.input = None
   
@@ -25,7 +26,7 @@ class ResBlock:
     if self.skip_layer is not None:
       self.input = self.skip_layer.forward(self.input)
     
-    # x += self.input
+    x += self.input
     x = self.relu2.forward(x)
     return x
 
@@ -50,12 +51,13 @@ class ResBlock:
 # print(g.shape)
 
 class ResLayer:
-  def __init__(self, in_channels: int, out_channels: int):
+  def __init__(self, in_channels: int, out_channels: int, skip_layer: bool = True, device="cpu"):
     self.in_channels = in_channels
     self.out_channels = out_channels
-    self.identity_conv = ConvLayer(in_channels, out_channels, kernel_size=[1, 1], strides=2)
-    self.res_block1 = ResBlock(in_channels, out_channels, 2, self.identity_conv)
-    self.res_block2 = ResBlock(out_channels, out_channels)
+    self.device = device
+    self.identity_conv = ConvLayer(in_channels, out_channels, kernel_size=[1, 1], strides=2, device= self.device)
+    self.res_block1 = ResBlock(in_channels, out_channels, 2, self.identity_conv if skip_layer else None, device=self.device)
+    self.res_block2 = ResBlock(out_channels, out_channels, device=self.device)
 
   def forward(self, x: torch.Tensor) -> torch.Tensor:
     x = self.res_block1.forward(x)

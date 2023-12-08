@@ -1,8 +1,9 @@
 import torch
 
 class softmax:
-  def __init__(self):
+  def __init__(self, device="cpu"):
     self.pla = None
+    self.device = device
 
   def forward(self,x):
     exp_x = torch.exp(x - torch.max(x)) 

@@ -1,14 +1,15 @@
 import torch
 
 class Relu:
-  def __init__(self, in_channels: int):
+  def __init__(self, in_channels: int, device="cpu"):
+    self.device = device
     self.in_channels = in_channels
   
-  def apply(self, x: float):
-    return 0 if x < 0 else x
+  def apply(self, x):
+    return torch.clamp(x, min=0)
 
   def forward(self, X: torch.Tensor) -> torch.Tensor:
-    return X.detach().apply_(lambda x: self.apply(x))
+    return self.apply(X)
 
   def backward(self, grad: torch.Tensor) -> torch.Tensor:
-    return grad.detach().apply_(lambda x: self.apply(x))
+    return self.apply(grad)

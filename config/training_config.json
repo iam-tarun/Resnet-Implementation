@@ -10,11 +10,13 @@
       "normalize_data": true
   },
   "model_save": {
-      "save_path": "models/",
-      "file_format": "h5"
+      "save_path": "models/model_checkpoint_epoch_{}.pth",
+      "file_format": "pth"
   },
   "logging": {
       "log_level": "info",
-      "log_file": "logs/training.log"
-  }
+      "log_file": "logs/training.txt"
+  },
+  "device": "mps",
+  "save_interval": 10
 }

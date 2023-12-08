@@ -9,18 +9,19 @@ import torch
 from layers.cce import CategoricalCrossEntropyLoss
 
 class ResNet:
-  def __init__(self, img_channels: [int, int, int]):
+  def __init__(self, img_channels: [int, int, int], device="cpu"):
+    self.device = device
     self.img_channels = img_channels
-    self.conv1 = ConvLayer(img_channels[0], 64, strides=2, kernel_size=[7, 7])
-    self.mPool = MaxPool(kernel_size=[3, 3], strides=2, padding=1)
-    self.layer1 = ResLayer(64, 64)
-    self.layer2 = ResLayer(64, 128)
-    self.layer3 = ResLayer(128, 256)
-    self.layer4 = ResLayer(256, 512)
-    self.avgPool = AvgPool()
-    self.flatten = Flatten([512, 2, 2])
-    self.linear = Linear(2048, 67)
-    self.softmax = softmax()
+    self.conv1 = ConvLayer(img_channels[0], 64, strides=2, kernel_size=[7, 7], device=self.device)
+    self.mPool = MaxPool(kernel_size=[3, 3], strides=2, padding=1, device=self.device)
+    self.layer1 = ResLayer(64, 64, device=self.device)
+    self.layer2 = ResLayer(64, 128, device=self.device)
+    self.layer3 = ResLayer(128, 256, device=self.device)
+    self.layer4 = ResLayer(256, 512, device=self.device)
+    self.avgPool = AvgPool(device=self.device)
+    self.flatten = Flatten([512, 2, 2], device=self.device)
+    self.linear = Linear(2048, 67, device=self.device)
+    self.softmax = softmax(device=self.device)
   
   def forward(self,  x: torch.Tensor):
     x = self.conv1.forward(x) # batch_size x 64 x 112 x 112

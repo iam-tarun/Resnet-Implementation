@@ -9,6 +9,10 @@ from torch.utils.data import DataLoader, random_split
 import numpy as np
 from model import ResNet
 from layers import cce
+from utils.load_config import load_training_config
+from utils.save_logs import save_metrics_to_log
+config = load_training_config()
+
 
 transform = transforms.Compose([
     transforms.Resize((229, 229)),
@@ -78,24 +82,40 @@ test_data_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False
 
 # epochs = 10
 
-class TrainModel:
+class TrainModel(torch.nn.Module):
     def __init__(self, img_channels, train_dataLoader, test_dataLoader, cur_epoch: int, n_epochs: int):
-        self.resnet = ResNet(img_channels)
+        super(TrainModel, self).__init__()
+        self.resnet = ResNet(img_channels, config['device'])
         self.train_dataLoader = train_dataLoader
         self.test_dataLoader = test_dataLoader
         self.n_epochs = n_epochs
         self.epochs = cur_epoch
-        self.cce = cce.CategoricalCrossEntropyLoss()
+        self.cce = cce.CategoricalCrossEntropyLoss(device=config['device'])
     
     def fit(self):
+        total_loss = 0
+        predictions_list = []
+        targets_list = []
         for _ in range(self.epochs, self.n_epochs):
             for __, (images, labels) in enumerate(self.train_dataLoader):
-                y_pred = self.resnet.forward(images)
+                y_pred = self.resnet.forward(images.to(device=config['device']))
                 loss = self.cce.forward(y_pred, labels)
+                total_loss += loss.item()
+                predictions_list.append(y_pred)
+                targets_list.append(labels)
                 print(loss)
-                grad = self.cce.backward(y_pred, labels)
+                grad = self.cce.backward(y_pred)
                 self.resnet.backward(grad)
-
+            predictions_tensor = torch.cat(predictions_list)
+            targets_tensor = torch.cat(targets_list)
+            accuracy, precision, recall, f1 = self.cce.calculate_metrics(predictions_tensor, targets_tensor)
+            average_loss = total_loss / len(self.train_dataLoader)
+            print(f'Epoch {_ + 1}: Loss={average_loss:.4f}, Accuracy={accuracy:.4f}, Precision={precision:.4f}, Recall={recall:.4f}, F1={f1:.4f}')
+            save_metrics_to_log(_, average_loss, accuracy, precision, recall, f1, config['logging']['log_file'])
+            if (_ + 1) % config['save_interval'] == 0:
+                checkpoint_path = config['model_save']['save_path'].format(_+1)
+                torch.save(self.state_dict(), checkpoint_path)
+                print(f'Model saved at epoch {_ + 1} to {checkpoint_path}')
 
 m = TrainModel([3, 229, 229], train_data_loader, test_data_loader, 0, 1)
 m.fit()

@@ -10,7 +10,7 @@ class ConvLayer:
     self.n_kernels = out_channels
     self.device = device
     if self.kernel_size == [1, 1] :
-      self.filters = torch.ones(1,1, dtype=torch.float, device=self.device)
+      self.filters = torch.ones(self.n_kernels, self.in_channels, 1,1, dtype=torch.float, device=self.device)
     else:
       self.filters = torch.randn(self.n_kernels, self.in_channels, self.kernel_size[0], self.kernel_size[1], device=self.device)
     self.bias = torch.zeros(1, self.n_kernels, device=self.device)
@@ -39,7 +39,7 @@ class ConvLayer:
           row_start = r * self.strides
           row_end = row_start + self.kernel_size[0]
           # do the dot product of each 2d matrix in the input with each kernel and add all the elements in the resultant 2d matrix (convolution operation) for the entire batch at the current position with all kernels
-          y[im, :, r, c] = (X[im, :, row_start: row_end, col_start: col_end] * self.filters).sum(dim= (1,2,3) if self.kernel_size[0] != 1 else (1,2)).to(device=self.device)
+          y[im, :, r, c] = (X[im, :, row_start: row_end, col_start: col_end] * self.filters).sum(dim= (1,2,3)).to(device=self.device)
           if self.doBias:
             y[im, :, r, c] = y[im, :, r, c].add(self.bias)
 
@@ -60,10 +60,10 @@ class ConvLayer:
   # new rotated filters dim = [6, 3, 13, 13]
   def backward(self, loss_grad: torch.Tensor, lr=0.01) -> torch.Tensor:
     # calculating the gradient for filters
-    self.filter_grads = torch.zeros_like(self.filters)
+    self.filter_grads = torch.zeros_like(self.filters, device=self.device)
     if self.strides != 1:
       out_size = [self.input.shape[0], self.out_channels, self.input.shape[2] - self.kernel_size[0] + 1, self.input.shape[3] - self.kernel_size[1] + 1]
-      new_grad = torch.zeros(out_size)
+      new_grad = torch.zeros(out_size, device=self.device)
 
       for r in range(0, new_grad.shape[2], self.strides):
         for c in range(0, new_grad.shape[3], self.strides):
@@ -79,19 +79,19 @@ class ConvLayer:
           col_start = c
           col_end = col_start + loss_grad.shape[3]
           # [6, 3] = ( [2, 3, 6, 6] * [2, 6, 6, 6] ) sum over 
-          self.filter_grads[:, ch, row_start, col_start] = torch.sum(self.input[:, ch, row_start: row_end, col_start: col_end].unsqueeze(0).repeat(1, self.input.shape[0], 1, 1) * loss_grad, dim=(0, 2, 3))
+          self.filter_grads[:, ch, row_start, col_start] = torch.sum(self.input[:, ch, row_start: row_end, col_start: col_end].unsqueeze(1) * loss_grad, dim=(0, 2, 3))
     
     # calculating the gradients for bias
-    self.bias_grads = torch.zeros_like(self.bias)
+    self.bias_grads = torch.zeros_like(self.bias, device=self.device)
     self.bias_grads = loss_grad.sum(dim=(2,3))
    
     new_size = (loss_grad.shape[0], loss_grad.shape[1], loss_grad.shape[2] + 2*(self.kernel_size[0]-1), loss_grad.shape[3] + 2*(self.kernel_size[1]-1))
-    padd_grad = torch.zeros(new_size)
+    padd_grad = torch.zeros(new_size, device=self.device)
     padd_grad[:, :, self.kernel_size[0]-1: loss_grad.shape[2] + self.kernel_size[0]-1, self.kernel_size[1]-1: loss_grad.shape[3] + self.kernel_size[1]-1] = loss_grad
     loss_grad = padd_grad
     
     # calculating the input loss gradients to return
-    input_grads = torch.zeros_like(self.input)
+    input_grads = torch.zeros_like(self.input, device=self.device)
     rotated_filters = torch.flip(self.filters, dims=(2, 3))
     # new_rotated_filter_size = (rotated_filters.shape[0], rotated_filters.shape[1],  2*(loss_grad.shape[2]-1) + self.kernel_size[0], 2*(loss_grad.shape[3]-1) + self.kernel_size[1])
     # rotated_filters_padded = torch.zeros(new_rotated_filter_size).to(device=self.device)

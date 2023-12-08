@@ -53,8 +53,8 @@ class BatchNorm:
                  2 * grad_var * (self.x_norm - self.running_mean) / self.batch_size + \
                  grad_mean / self.batch_size
     # Update learnable parameters
-    self.weight -= lr * w_grad
-    self.bias -= lr * b_grad
+    self.weight -= lr * w_grad.sum(dim=0)
+    self.bias -= lr * b_grad.sum(dim=0)
 
     return grad_x
 
