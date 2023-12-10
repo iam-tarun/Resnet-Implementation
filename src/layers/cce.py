@@ -1,5 +1,4 @@
 import torch
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 class CategoricalCrossEntropyLoss:
   def __init__(self, device="cpu"):
@@ -23,15 +22,13 @@ class CategoricalCrossEntropyLoss:
     for i in range(predictions.shape[0]):
       self.y[i] = torch.tensor([int(bit) for bit in format(targets[i], 'b').zfill(67)], dtype=torch.int)
     # Convert to numpy arrays
-    targets_np = y.cpu().numpy()
+    targets_np = y
     predictions_np = binary_predictions.cpu().numpy()
 
     # Calculate metrics
-    accuracy = accuracy_score(targets_np, predictions_np)
-    precision = precision_score(targets_np, predictions_np, average='binary')
-    recall = recall_score(targets_np, predictions_np, average='binary')
-    f1 = f1_score(targets_np, predictions_np, average='binary')
-
+    accuracy = self.accuracy(targets_np, predictions_np)
+    precision, recall, f1 = self.precision_recall_f1(targets_np, predictions_np, average='binary')
+  
     return accuracy, precision, recall, f1
 
   def backward(self, y_pred: torch.Tensor) -> torch.Tensor:
@@ -41,6 +38,25 @@ class CategoricalCrossEntropyLoss:
     grad_loss = -self.y / (y_pred + eps)
     return grad_loss
 
+  def accuracy(self, predictions, labels):
+    correct = (predictions == labels).sum().item()
+    total = labels.size(0)
+    return correct / total
+  
+  def precision_recall_f1(self, predictions, labels, threshold=0.5):
+    # Apply threshold to convert probability predictions to binary
+    binary_predictions = (predictions >= threshold).float()
+
+    true_positives = torch.sum((binary_predictions == 1) & (labels == 1)).item()
+    false_positives = torch.sum((binary_predictions == 1) & (labels == 0)).item()
+    false_negatives = torch.sum((binary_predictions == 0) & (labels == 1)).item()
+
+    precision = true_positives / max((true_positives + false_positives), 1e-10)
+    recall = true_positives / max((true_positives + false_negatives), 1e-10)
+    
+    f1 = 2 * (precision * recall) / max((precision + recall), 1e-10)
+
+    return precision, recall, f1
 # y_pred = torch.Tensor([
 #     [0.6, 0.2, 0.2],
 #     [0.2, 0.7, 0.1],

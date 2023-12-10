@@ -12,7 +12,7 @@ class ConvLayer:
     if self.kernel_size == [1, 1] :
       self.filters = torch.ones(self.n_kernels, self.in_channels, 1,1, dtype=torch.float, device=self.device)
     else:
-      self.filters = torch.randn(self.n_kernels, self.in_channels, self.kernel_size[0], self.kernel_size[1], device=self.device)
+      self.filters = torch.ones(self.n_kernels, self.in_channels, self.kernel_size[0], self.kernel_size[1], device=self.device)
     self.bias = torch.zeros(1, self.n_kernels, device=self.device)
     self.doBias = bias
     self.input = None
@@ -30,18 +30,18 @@ class ConvLayer:
       X = x_padded
     self.input = X
     # go through each column
-    for im in range(X.shape[0]):
-      for c in range(0, y.shape[3]):
-        col_start = c * self.strides
-        col_end = col_start + self.kernel_size[1]
-        # go through each row
-        for r in range(0, y.shape[2]):
-          row_start = r * self.strides
-          row_end = row_start + self.kernel_size[0]
-          # do the dot product of each 2d matrix in the input with each kernel and add all the elements in the resultant 2d matrix (convolution operation) for the entire batch at the current position with all kernels
-          y[im, :, r, c] = (X[im, :, row_start: row_end, col_start: col_end] * self.filters).sum(dim= (1,2,3)).to(device=self.device)
-          if self.doBias:
-            y[im, :, r, c] = y[im, :, r, c].add(self.bias)
+    # for im in range(X.shape[0]):
+    for c in range(0, y.shape[3]):
+      col_start = c * self.strides
+      col_end = col_start + self.kernel_size[1]
+      # go through each row
+      for r in range(0, y.shape[2]):
+        row_start = r * self.strides
+        row_end = row_start + self.kernel_size[0]
+        # do the dot product of each 2d matrix in the input with each kernel and add all the elements in the resultant 2d matrix (convolution operation) for the entire batch at the current position with all kernels
+        y[:, :, r, c] = (X[:, :, row_start: row_end, col_start: col_end].unsqueeze(1) * self.filters.unsqueeze(0).repeat(X.shape[0], 1, 1, 1, 1 )).sum(dim= (2, 3, 4)).to(device=self.device)
+        if self.doBias:
+          y[:, :, r, c] = y[:, :, r, c].add(self.bias)
 
     return y
 
@@ -134,8 +134,8 @@ class ConvLayer:
 # o1 = F.conv2d(input2, custom_kernels, bias=bias_val)
 # print(o1)
 # o1.backward(grads)
-# # print(custom_kernels.grad)
-# # print(c2.filter_grads)
+# print(custom_kernels.grad)
+# print(c2.filter_grads)
 # # print(bias_val.grad)
 # # print(c2.bias_grads)
 # print(input2.grad)

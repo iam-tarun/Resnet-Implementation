@@ -6,9 +6,9 @@ class BatchNorm:
     self.device = device
     self.epsilon = epsilon
     self.momentum = momentum
-    self.weight = torch.ones(1, self.n_features, 1, 1, device=self.device)
+    self.weight = torch.randn(1, self.n_features, 1, 1, device=self.device)
     self.bias = torch.zeros(1, self.n_features, 1, 1, device=self.device)
-    self.running_mean = torch.ones(1, self.n_features, 1, 1, device=self.device)
+    self.running_mean = torch.randn(1, self.n_features, 1, 1, device=self.device)
     self.running_var = torch.zeros(1, self.n_features, 1, 1, device=self.device)
 
     self.batch_size = None

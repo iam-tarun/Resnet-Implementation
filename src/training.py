@@ -117,5 +117,5 @@ class TrainModel(torch.nn.Module):
                 torch.save(self.state_dict(), checkpoint_path)
                 print(f'Model saved at epoch {_ + 1} to {checkpoint_path}')
 
-m = TrainModel([3, 229, 229], train_data_loader, test_data_loader, 0, 1)
+m = TrainModel([3, 229, 229], train_data_loader, test_data_loader, 0, 10)
 m.fit()

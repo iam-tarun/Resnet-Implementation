@@ -18,5 +18,5 @@
       "log_file": "logs/training.txt"
   },
   "device": "mps",
-  "save_interval": 10
+  "save_interval": 2
 }
